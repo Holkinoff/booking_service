@@ -72,6 +72,8 @@ class BookingService:
             start_at=slot_start_utc,
             end_at=slot_end_utc,
             status=BookingStatus.CONFIRMED,
+            created_at=now_utc,
+            updated_at=now_utc,
         )
         session.add(booking)
 
