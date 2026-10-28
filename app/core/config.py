@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     BOOKING_MIN_MINUTES_BEFORE_SLOT: int = 60
     NOTIFICATION_HOURLY_LIMIT: int = 3
 
+    # Outbox-пересыльщик
+    OUTBOX_POLL_INTERVAL_SECONDS: float = 2.0
+    OUTBOX_BATCH_SIZE: int = 50
+    OUTBOX_MAX_RETRIES: int = 5
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
