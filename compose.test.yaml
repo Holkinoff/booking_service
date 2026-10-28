@@ -1,0 +1,70 @@
+services:
+  postgres-test:
+    image: postgres:18
+    restart: "no"
+    environment:
+      POSTGRES_DB: booking_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    # Быстрая оперативная память tmpfs для одноразовой тестовой БД (не оставляет мусора на диске)
+    tmpfs:
+      - /var/lib/postgresql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d booking_test" ]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+    networks:
+      - test_network
+
+  redis-test:
+    image: redis:8
+    restart: "no"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+    networks:
+      - test_network
+
+  rabbitmq-test:
+    image: rabbitmq:4-management
+    restart: "no"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - test_network
+
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    restart: "no"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres-test:5432/booking_test
+      REDIS_URL: redis://redis-test:6379/0
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq-test:5672/
+      BOOKING_MIN_MINUTES_BEFORE_SLOT: 60
+      NOTIFICATION_HOURLY_LIMIT: 3
+    depends_on:
+      postgres-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      rabbitmq-test:
+        condition: service_healthy
+    command: sh -c "alembic upgrade head && pytest -v"
+    networks:
+      - test_network
+
+networks:
+  test_network:
+    driver: bridge

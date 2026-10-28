@@ -51,30 +51,32 @@ services:
       retries: 3
     networks:
       - booking_network
-  # booking-service:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   restart: unless-stopped
-  #   command: uvicorn app.main:app --host 0.0.0.0 --port 8000
-  #   ports:
-  #     - "8000:8000"
-  #   env_file:
-  #     - .env
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #     rabbitmq:
-  #       condition: service_healthy
-  #   networks:
-  #     - booking_network
+  booking-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - booking_network
 
   # notification-worker:
   #   build:
   #     context: .
   #     dockerfile: Dockerfile
+  #     target: production
   #   restart: unless-stopped
   #   command: python -m app.notification_worker
   #   env_file:
@@ -86,7 +88,6 @@ services:
   #       condition: service_healthy
   #   networks:
   #     - booking_network
-
 volumes:
   pg_data:
   redis_data:
