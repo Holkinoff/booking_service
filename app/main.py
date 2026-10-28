@@ -12,6 +12,7 @@ from app.core.logging import correlation_id_ctx, logger, setup_logging
 from app.core.rabbitmq import close_rabbitmq_connection
 from app.core.redis import close_redis_client
 from app.services.outbox_service import OutboxService
+from app.services.reminder_service import ReminderService
 
 
 @asynccontextmanager
@@ -20,22 +21,29 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     setup_logging()
     logger.info("service_starting", service="booking-service")
 
-    # Фоновый воркер пересылки событий из Outbox в брокер
+    # Фоновые задачи: пересылка событий из Outbox в брокер и планировщик напоминаний
     stop_event = asyncio.Event()
     outbox_task = asyncio.create_task(
         OutboxService.run_outbox_publisher(stop_event=stop_event)
+    )
+    reminder_task = asyncio.create_task(
+        ReminderService.run_reminder_scheduler(stop_event=stop_event)
     )
 
     yield
 
     logger.info("service_shutting_down", service="booking-service")
-    # Сигнализируем воркеру об остановке и даём завершить текущую пачку
+    # Сигнализируем фоновым задачам об остановке
     stop_event.set()
     try:
-        await asyncio.wait_for(outbox_task, timeout=5.0)
+        await asyncio.wait_for(
+            asyncio.gather(outbox_task, reminder_task, return_exceptions=True),
+            timeout=5.0,
+        )
     except TimeoutError:
-        logger.warning("outbox_publisher_shutdown_timeout", timeout_sec=5.0)
+        logger.warning("background_tasks_shutdown_timeout", timeout_sec=5.0)
         outbox_task.cancel()
+        reminder_task.cancel()
 
     await close_redis_client()
     await close_rabbitmq_connection()

@@ -1,7 +1,7 @@
 import enum
 import uuid
 from datetime import datetime, time
-from typing import Any, Optional
+from typing import Any
 
 from sqlalchemy import (
     Boolean,
@@ -20,7 +20,6 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 class Base(DeclarativeBase):
     """Базовый класс для всех моделей SQLAlchemy."""
-    pass
 
 
 class BookingStatus(str, enum.Enum):
@@ -95,6 +94,13 @@ class Booking(Base):
         nullable=False,
         index=True,
     )
+    reminder_sent: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        server_default="false",
+        nullable=False,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -132,7 +138,7 @@ class IdempotencyKey(Base):
     __tablename__ = "idempotency_keys"
 
     key: Mapped[str] = mapped_column(String(255), primary_key=True)
-    client_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    client_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         nullable=True,
     )
@@ -188,7 +194,7 @@ class OutboxEvent(Base):
         nullable=False,
         index=True,
     )
-    processed_at: Mapped[Optional[datetime]] = mapped_column(
+    processed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
     )
@@ -201,3 +207,4 @@ class OutboxEvent(Base):
             postgresql_where=(status == OutboxStatus.PENDING),
         ),
     )
+

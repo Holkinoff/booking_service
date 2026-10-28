@@ -1,6 +1,6 @@
 import asyncio
 import uuid
-from datetime import datetime, time, timedelta, timezone
+from datetime import UTC, datetime, time, timedelta
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -37,7 +37,7 @@ async def test_race_condition_20_concurrent_bookings():
         await session.commit()
 
     # 2. Слот на завтра в 11:00 UTC (гарантированно > 60 мин от текущего времени)
-    now_utc = datetime.now(timezone.utc)
+    now_utc = datetime.now(UTC)
     target_slot = (now_utc + timedelta(days=1)).replace(
         hour=11, minute=0, second=0, microsecond=0
     )

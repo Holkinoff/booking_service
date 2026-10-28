@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -8,7 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.logging import logger
-from app.models import Booking, BookingStatus, IdempotencyKey, Master, OutboxEvent, OutboxStatus
+from app.models import (
+    Booking,
+    BookingStatus,
+    IdempotencyKey,
+    Master,
+    OutboxEvent,
+    OutboxStatus,
+)
 from app.schemas import BookingCreateRequest, BookingResponse
 from app.services.slot_service import SlotService
 
@@ -38,11 +45,11 @@ class BookingService:
             return BookingResponse(**existing_idemp.response_body), existing_idemp.response_code
 
         # 2. Проверка: Слот в прошлом или ближе чем за 60 минут
-        now_utc = datetime.now(timezone.utc)
+        now_utc = datetime.now(UTC)
         min_allowed_time = now_utc + timedelta(minutes=settings.BOOKING_MIN_MINUTES_BEFORE_SLOT)
 
         # Приводим к UTC если таймзона не указана
-        slot_start_utc = data.start_at if data.start_at.tzinfo else data.start_at.replace(tzinfo=timezone.utc)
+        slot_start_utc = data.start_at if data.start_at.tzinfo else data.start_at.replace(tzinfo=UTC)
 
         if slot_start_utc < min_allowed_time:
             raise HTTPException(
@@ -72,6 +79,7 @@ class BookingService:
             start_at=slot_start_utc,
             end_at=slot_end_utc,
             status=BookingStatus.CONFIRMED,
+            reminder_sent=False,
             created_at=now_utc,
             updated_at=now_utc,
         )

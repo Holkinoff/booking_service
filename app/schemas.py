@@ -1,11 +1,10 @@
 import uuid
 from datetime import datetime, time
-from typing import Any, Optional
+from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models import BookingStatus
-
 
 # --- Мастера и слоты ---
 
@@ -47,10 +46,16 @@ class BookingResponse(BaseModel):
     start_at: datetime
     end_at: datetime
     status: BookingStatus
+    reminder_sent: bool = False
     created_at: datetime
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("reminder_sent", mode="before")
+    @classmethod
+    def validate_reminder_sent(cls, v: Any) -> bool:
+        return bool(v) if v is not None else False
 
 
 # --- События (Outbox / RabbitMQ) ---
@@ -72,10 +77,10 @@ class OutboxEventMessage(BaseModel):
     """Схема сериализации/валидации события для передачи через RabbitMQ."""
     event_id: uuid.UUID = Field(..., description="Уникальный ID события (для дедупликации в воркере)")
     aggregate_type: str = Field(default="booking", description="Тип агрегата (booking)")
-    aggregate_id: Optional[uuid.UUID] = Field(default=None, description="Идентификатор сущности/бронирования")
+    aggregate_id: uuid.UUID | None = Field(default=None, description="Идентификатор сущности/бронирования")
     event_type: str = Field(..., description="Тип события: booking.created | booking.cancelled")
     payload: BookingEventPayload = Field(..., description="Полезная нагрузка события")
-    correlation_id: Optional[str] = Field(default=None, description="Сквозной идентификатор запроса/события для сквозного логирования")
+    correlation_id: str | None = Field(default=None, description="Сквозной идентификатор запроса/события для сквозного логирования")
     created_at: datetime = Field(..., description="Время генерации события в UTC")
 
     model_config = ConfigDict(from_attributes=True)

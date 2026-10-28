@@ -25,6 +25,15 @@ class Settings(BaseSettings):
     OUTBOX_BATCH_SIZE: int = 50
     OUTBOX_MAX_RETRIES: int = 5
 
+    # Напоминания (Scheduler)
+    REMINDER_HOURS_BEFORE: int = 24
+    REMINDER_POLL_INTERVAL_SECONDS: float = 60.0
+    REMINDER_BATCH_SIZE: int = 100
+
+    # Notification Worker & Retries
+    NOTIFICATION_RETRY_DELAY_SECONDS: float = 2.0
+    NOTIFICATION_MAX_RETRIES: int = 3
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -72,22 +72,24 @@ services:
     networks:
       - booking_network
 
-  # notification-worker:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #     target: production
-  #   restart: unless-stopped
-  #   command: python -m app.notification_worker
-  #   env_file:
-  #     - .env
-  #   depends_on:
-  #     rabbitmq:
-  #       condition: service_healthy
-  #     redis:
-  #       condition: service_healthy
-  #   networks:
-  #     - booking_network
+  notification-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    restart: unless-stopped
+    command: python -m app.workers.notification_worker
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - booking_network
 volumes:
   pg_data:
   redis_data:

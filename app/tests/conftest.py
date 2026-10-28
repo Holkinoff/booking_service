@@ -1,6 +1,6 @@
 import uuid
+from collections.abc import AsyncGenerator
 from datetime import time
-from typing import AsyncGenerator
 from unittest.mock import AsyncMock, patch
 
 import pytest

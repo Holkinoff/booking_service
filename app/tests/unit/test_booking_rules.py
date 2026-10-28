@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi import HTTPException
@@ -15,7 +15,7 @@ from app.services.booking_service import BookingService
 @pytest.mark.asyncio
 async def test_booking_in_past_rejected(db_session: AsyncSession, test_master: Master, mock_redis):
     """Попытка записаться на время в прошлом должна отклоняться с кодом 400."""
-    past_time = datetime.now(timezone.utc) - timedelta(hours=2)
+    past_time = datetime.now(UTC) - timedelta(hours=2)
     request_data = BookingCreateRequest(
         master_id=test_master.id,
         client_id=uuid.uuid4(),
@@ -42,7 +42,7 @@ async def test_booking_closer_than_configured_threshold_rejected(
 ):
     """Попытка записаться ближе чем за настроенное число минут отклоняется с кодом 400."""
     # Берем время ближе настроенного порога (порог - 5 минут)
-    too_soon_time = datetime.now(timezone.utc) + timedelta(
+    too_soon_time = datetime.now(UTC) + timedelta(
         minutes=max(1, settings.BOOKING_MIN_MINUTES_BEFORE_SLOT - 5)
     )
     request_data = BookingCreateRequest(
@@ -78,7 +78,7 @@ async def test_booking_min_minutes_setting_is_configurable(
     monkeypatch.setattr(settings, "BOOKING_MIN_MINUTES_BEFORE_SLOT", custom_minutes)
 
     # 1. 90 минут (< 120) должно быть отклонено
-    too_soon_time = datetime.now(timezone.utc) + timedelta(minutes=90)
+    too_soon_time = datetime.now(UTC) + timedelta(minutes=90)
     with pytest.raises(HTTPException) as exc_info:
         await BookingService.create_booking(
             session=db_session,
@@ -94,7 +94,7 @@ async def test_booking_min_minutes_setting_is_configurable(
     assert f"{custom_minutes} минут" in exc_info.value.detail
 
     # 2. 130 минут (> 120) должно успешно создаться
-    allowed_time = datetime.now(timezone.utc) + timedelta(minutes=130)
+    allowed_time = datetime.now(UTC) + timedelta(minutes=130)
     booking_resp, status_code = await BookingService.create_booking(
         session=db_session,
         data=BookingCreateRequest(
@@ -121,7 +121,7 @@ async def test_booking_allowed_after_configured_threshold_and_creates_outbox(
     - Автоматически создает запись в Outbox со статусом PENDING.
     - Вызывает инвалидацию кэша слотов.
     """
-    future_time = datetime.now(timezone.utc) + timedelta(
+    future_time = datetime.now(UTC) + timedelta(
         minutes=settings.BOOKING_MIN_MINUTES_BEFORE_SLOT + 30
     )
     client_id = uuid.uuid4()
@@ -161,7 +161,7 @@ async def test_booking_allowed_after_configured_threshold_and_creates_outbox(
 @pytest.mark.asyncio
 async def test_booking_inactive_master_rejected(db_session: AsyncSession, mock_redis):
     """Попытка записаться к несуществующему мастеру возвращает 404."""
-    future_time = datetime.now(timezone.utc) + timedelta(hours=2)
+    future_time = datetime.now(UTC) + timedelta(hours=2)
     request_data = BookingCreateRequest(
         master_id=uuid.uuid4(),
         client_id=uuid.uuid4(),
@@ -182,7 +182,7 @@ async def test_booking_inactive_master_rejected(db_session: AsyncSession, mock_r
 @pytest.mark.asyncio
 async def test_cancel_booking_success(db_session: AsyncSession, test_master: Master, mock_redis):
     """Отмена бронирования переводит статус в CANCELLED и создает Outbox-событие booking.cancelled."""
-    future_time = datetime.now(timezone.utc) + timedelta(hours=3)
+    future_time = datetime.now(UTC) + timedelta(hours=3)
     request_data = BookingCreateRequest(
         master_id=test_master.id,
         client_id=uuid.uuid4(),

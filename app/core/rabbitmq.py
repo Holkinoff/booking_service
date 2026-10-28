@@ -102,7 +102,7 @@ async def setup_rabbitmq_topology(
         arguments=notifications_queue_arguments,
     )
 
-    # 5. Связывание очереди с событиями бронирования (booking.created, booking.cancelled)
+    # 5. Связывание очереди с событиями бронирования (booking.*)
     await notifications_queue.bind(
         exchange=events_exchange,
         routing_key="booking.*",

@@ -1,6 +1,6 @@
 import json
 import uuid
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 from fastapi import HTTPException
@@ -51,7 +51,7 @@ async def test_slot_occupied_when_confirmed_booking_exists(
 ):
     """Слот должен быть помечен как занятый (is_available=False), если есть подтвержденная бронь."""
     target_date = date(2026, 11, 10)
-    slot_time = datetime(2026, 11, 10, 11, 0, tzinfo=timezone.utc)
+    slot_time = datetime(2026, 11, 10, 11, 0, tzinfo=UTC)
 
     # Создаем подтвержденную бронь на 11:00
     booking = Booking(
@@ -84,7 +84,7 @@ async def test_slot_available_when_booking_cancelled(
 ):
     """Отмененная бронь (CANCELLED) не должна блокировать слот."""
     target_date = date(2026, 11, 10)
-    slot_time = datetime(2026, 11, 10, 14, 0, tzinfo=timezone.utc)
+    slot_time = datetime(2026, 11, 10, 14, 0, tzinfo=UTC)
 
     # Создаем отмененную бронь на 14:00
     booking = Booking(

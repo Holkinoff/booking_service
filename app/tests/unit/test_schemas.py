@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from pydantic import ValidationError
@@ -7,9 +7,7 @@ from pydantic import ValidationError
 from app.schemas import (
     BookingCreateRequest,
     BookingEventPayload,
-    MasterSlotsResponse,
     OutboxEventMessage,
-    SlotResponse,
 )
 
 
@@ -17,7 +15,7 @@ def test_booking_create_request_valid():
     """Корректные типы успешно парсятся в Pydantic модель."""
     master_id = uuid.uuid4()
     client_id = uuid.uuid4()
-    now_iso = datetime.now(timezone.utc).isoformat()
+    now_iso = datetime.now(UTC).isoformat()
 
     req = BookingCreateRequest(
         master_id=master_id,
@@ -35,7 +33,7 @@ def test_booking_create_request_invalid_uuid():
         BookingCreateRequest(
             master_id="not-a-valid-uuid",  # type: ignore
             client_id=uuid.uuid4(),
-            start_at=datetime.now(timezone.utc),
+            start_at=datetime.now(UTC),
         )
 
 
@@ -45,7 +43,7 @@ def test_outbox_event_message_serialization():
     booking_id = uuid.uuid4()
     master_id = uuid.uuid4()
     client_id = uuid.uuid4()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     msg = OutboxEventMessage(
         event_id=event_id,

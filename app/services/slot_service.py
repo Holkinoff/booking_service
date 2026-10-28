@@ -1,6 +1,6 @@
 import json
 import uuid
-from datetime import date, datetime, time, timedelta, timezone
+from datetime import UTC, date, datetime, time, timedelta
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -70,8 +70,8 @@ class SlotService:
             )
 
         # 3. Выбираем занятые бронирования на эту дату
-        start_of_day = datetime.combine(slot_date, time.min, tzinfo=timezone.utc)
-        end_of_day = datetime.combine(slot_date, time.max, tzinfo=timezone.utc)
+        start_of_day = datetime.combine(slot_date, time.min, tzinfo=UTC)
+        end_of_day = datetime.combine(slot_date, time.max, tzinfo=UTC)
 
         bookings_result = await session.execute(
             select(Booking).where(
@@ -86,8 +86,8 @@ class SlotService:
 
         # 4. Генерируем 30-минутную сетку рабочего дня мастера
         slots: list[SlotResponse] = []
-        current_time_dt = datetime.combine(slot_date, master.work_start, tzinfo=timezone.utc)
-        work_end_dt = datetime.combine(slot_date, master.work_end, tzinfo=timezone.utc)
+        current_time_dt = datetime.combine(slot_date, master.work_start, tzinfo=UTC)
+        work_end_dt = datetime.combine(slot_date, master.work_end, tzinfo=UTC)
         slot_duration = timedelta(minutes=master.slot_duration_minutes)
 
         while current_time_dt + slot_duration <= work_end_dt:

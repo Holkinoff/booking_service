@@ -1,4 +1,3 @@
-from typing import Optional
 
 import redis.asyncio as aioredis
 from redis.asyncio import Redis
@@ -6,7 +5,7 @@ from redis.asyncio import Redis
 from app.core.config import settings
 
 # Глобальный клиент Redis
-redis_client: Optional[Redis] = None
+redis_client: Redis | None = None
 
 
 async def get_redis_client() -> Redis:

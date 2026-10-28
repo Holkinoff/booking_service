@@ -159,13 +159,15 @@ class OutboxService:
             if success_count > 0:
                 continue
 
-            # Засыпаем на poll_interval только когда новых событий в БД нет
+            # Засыпаем на poll_interval, либо мгновенно прерываем паузу при сигнале остановки (graceful shutdown)
             if stop_event:
                 try:
                     await asyncio.wait_for(stop_event.wait(), timeout=poll_interval)
-                    break
+                    break  # Получен сигнал остановки -> немедленно выходим из цикла
                 except TimeoutError:
-                    pass
+                    # Штатное поведение: время паузы истекло, сигнала остановки не было.
+                    # Переходим к следующему циклу опроса БД.
+                    continue
             else:
                 await asyncio.sleep(poll_interval)
 

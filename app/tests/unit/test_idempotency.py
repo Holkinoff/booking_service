@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from httpx import AsyncClient
@@ -23,7 +23,7 @@ async def test_idempotent_duplicate_request_returns_same_response(
     - Возвращает идентичный результат и статус 201.
     - НЕ создает вторую запись бронирования в базе данных.
     """
-    future_time = datetime.now(timezone.utc) + timedelta(
+    future_time = datetime.now(UTC) + timedelta(
         minutes=settings.BOOKING_MIN_MINUTES_BEFORE_SLOT + 30
     )
     client_id = uuid.uuid4()
@@ -66,7 +66,7 @@ async def test_idempotent_duplicate_request_returns_same_response(
 @pytest.mark.asyncio
 async def test_empty_idempotency_key_header_rejected(client: AsyncClient, test_master: Master):
     """Пустой заголовок Idempotency-Key отклоняется с кодом 400."""
-    future_time = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
+    future_time = (datetime.now(UTC) + timedelta(hours=2)).isoformat()
     payload = {
         "master_id": str(test_master.id),
         "client_id": str(uuid.uuid4()),
@@ -85,7 +85,7 @@ async def test_empty_idempotency_key_header_rejected(client: AsyncClient, test_m
 @pytest.mark.asyncio
 async def test_missing_idempotency_key_header_rejected(client: AsyncClient, test_master: Master):
     """Отсутствие обязательного заголовка Idempotency-Key отклоняется FastAPI с кодом 422."""
-    future_time = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
+    future_time = (datetime.now(UTC) + timedelta(hours=2)).isoformat()
     payload = {
         "master_id": str(test_master.id),
         "client_id": str(uuid.uuid4()),
