@@ -7,6 +7,7 @@ from fastapi import FastAPI, Request, Response
 
 from app.api.router import api_router
 from app.core.logging import correlation_id_ctx, logger, setup_logging
+from app.core.rabbitmq import close_rabbitmq_connection
 from app.core.redis import close_redis_client
 
 
@@ -18,6 +19,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
     logger.info("service_shutting_down", service="booking-service")
     await close_redis_client()
+    await close_rabbitmq_connection()
 
 
 app = FastAPI(

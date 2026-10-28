@@ -48,6 +48,7 @@ def mock_redis() -> AsyncMock:
     fake_redis.ping.return_value = True
 
     with patch("app.core.redis.get_redis_client", return_value=fake_redis), \
+         patch("app.api.health.get_redis_client", return_value=fake_redis), \
          patch("app.services.slot_service.get_redis_client", return_value=fake_redis):
         yield fake_redis
 

@@ -21,7 +21,7 @@ COPY . /app/
 CMD ["pytest", "-v"]
 
 
-# --- 3. Продакшн-образ: только боевые зависимости ---
+# --- 3. Продакшн-образ: ---
 FROM base AS production
 
 RUN pip install --no-cache-dir --upgrade pip && \
